@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quotes App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Quotes</h1>
+
+  <!-- Status Message -->
+  <div id="status"></div>
+
+  <!-- Quote List -->
+  <ul id="quote-list"></ul>
+
+  <!-- Quote Form -->
+  <h2>Add New Quote</h2>
+  <form id="quote-form">
+    <input type="text" id="text" placeholder="Quote" required />
+    <input type="text" id="author" placeholder="Author" required />
+    <button type="submit" id="submitBtn">Add Quote</button>
+  </form>
+
+  <script>
+    const statusBox = document.getElementById('status');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function showStatus(msg, type = '') {
+      statusBox.textContent = msg;
+      statusBox.className = type;
+    }
+
+    function loadQuotes() {
+      showStatus('Loading quotes...', 'loading');
+      fetch('/api/quotes')
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch quotes');
+          return res.json();
+        })
+        .then(data => {
+          const list = document.getElementById('quote-list');
+          list.innerHTML = '';
+          data.forEach(quote => {
+            const item = document.createElement('li');
+
+            const quoteText = document.createElement('div');
+            quoteText.className = 'quote-text';
+            quoteText.textContent = `"${quote.text}"`;
+
+            const quoteAuthor = document.createElement('div');
+            quoteAuthor.className = 'quote-author';
+            quoteAuthor.textContent = `— ${quote.author}`;
+
+            item.appendChild(quoteText);
+            item.appendChild(quoteAuthor);
+            list.appendChild(item);
+          });
+          showStatus('Quotes loaded successfully ✅', 'success');
+        })
+        .catch(err => {
+          showStatus('Error loading quotes ❌', 'error');
+        });
+    }
+
+    loadQuotes();
+
+    document.getElementById('quote-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = document.getElementById('text').value;
+      const author = document.getElementById('author').value;
+
+      submitBtn.disabled = true;
+      showStatus('Submitting...', 'loading');
+
+      try {
+        const res = await fetch('/api/quotes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, author })
+        });
+
+        if (!res.ok) throw new Error('Failed to submit quote');
+
+        showStatus('Quote added ✅', 'success');
+        e.target.reset();
+        loadQuotes();
+      } catch (err) {
+        showStatus('Error adding quote ❌', 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+.env
+node_modules
+dist
+.vscode
+generated/
+
+/generated/prisma
